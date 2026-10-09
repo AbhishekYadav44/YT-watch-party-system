@@ -3,6 +3,7 @@ import dotenv from "dotenv"
 import cors from "cors"
 import mongoose from "mongoose";
 import userRoutes from "./routes/userRoutes.js"
+import roomRoutes from "./routes/roomRoutes.js";
 dotenv.config()
 const app = express();
 
@@ -27,5 +28,6 @@ main().then(() => {
 })
 
 app.use('/user', userRoutes);
+app.use("/room" , roomRoutes)
 
 export default app;
