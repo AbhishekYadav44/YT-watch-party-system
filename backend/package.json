@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "tsc -b && node ./dist/app.js"
+    "dev": "tsc -b && node ./dist/server.js"
   },
   "keywords": [],
   "author": "",
@@ -15,8 +15,10 @@
     "@types/express": "^5.0.6",
     "@types/mongoose": "^5.11.96",
     "cors": "^2.8.6",
+    "dotenv": "^18.0.6",
     "express": "^5.2.1",
     "mongoose": "^9.11.1",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "ws": "^8.22.0"
   }
 }
