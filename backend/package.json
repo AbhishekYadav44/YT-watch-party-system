@@ -16,6 +16,7 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/mongoose": "^5.11.96",
+    "@types/ws": "^8.18.2",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "crypto": "^1.0.1",
