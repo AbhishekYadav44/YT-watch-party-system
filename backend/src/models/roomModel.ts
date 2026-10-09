@@ -28,6 +28,10 @@ const roomSchema = new mongoose.Schema(
                     enum: ["host", "moderator", "participant", "viewer"],
                     default: "participant",
                 },
+                isOnline: {
+                    type: Boolean,
+                    default: false
+                }
             },
         ],
 

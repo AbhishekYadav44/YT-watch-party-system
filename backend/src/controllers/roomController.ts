@@ -22,7 +22,8 @@ export async function createRoom(req: CustomRequest, res: Response) {
             participants: [
                 {
                     user: req.userId,
-                    role: "host"
+                    role: "host",
+                    isOnline: true
                 }
             ],
         })
@@ -38,4 +39,52 @@ export async function createRoom(req: CustomRequest, res: Response) {
         });
     }
 
+}
+
+
+export async function joinRoom(req: CustomRequest, res: Response) {
+    try {
+        const { roomId } = req.body;
+
+        if (!roomId) {
+            return res.status(400).json({
+                message: "meetingId is required"
+            });
+        }
+
+        const room = await roomModel.findOne({ roomId })
+        if (!room) {
+            return res.status(400).json({
+                message: "meeting not exist"
+            })
+        }
+
+        const participant = room.participants.find(
+            (p) => p.user.toString() === req.userId
+        );
+
+        if (participant) {
+            participant.isOnline = true;
+        } else {
+            room.participants.push({
+                user: req.userId,
+                role: "participant",
+                isOnline: true,
+            });
+        }
+
+        await room.save();
+
+        return res.status(200).json({
+            message: "Room joined successfully!",
+            roomId: room.roomId,
+        });
+
+
+    } catch (e) {
+        console.log(e)
+        return res.status(400).json({
+            message: "Try again or room does not exist!"
+        })
+    }
 }
