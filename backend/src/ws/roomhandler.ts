@@ -215,7 +215,6 @@ export class Room {
       }
       private async changeVideo(socket: WebSocket, userId: string, videoId : string) {
 
-
             let roomId = this.socketsroom.get(socket);
             if (!roomId) return;
 

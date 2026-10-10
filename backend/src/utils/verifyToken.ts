@@ -18,5 +18,4 @@ export function verifyToken(token: string): string {
 
     return decoded.id;
 
-
 }
