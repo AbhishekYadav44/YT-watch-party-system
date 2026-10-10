@@ -21,6 +21,8 @@ export class Room {
                   await this.pauseVideo(socket, userId);
             } else if (message.type === 'seek') {
                   await this.seekVideo(socket, userId ,message.currentTime);
+            }else if (message.type === 'change-video') {
+                  await this.changeVideo(socket, userId ,message.videoId);
             }
       }
 
@@ -207,6 +209,30 @@ export class Room {
             }
 
             room.currentVideo.currentTime = currentTime;
+            await room.save()
+
+            await this.SyncState(socket);
+      }
+      private async changeVideo(socket: WebSocket, userId: string, videoId : string) {
+
+
+            let roomId = this.socketsroom.get(socket);
+            if (!roomId) return;
+
+            let room = await roomModel.findOne({ roomId });
+            if (!room) return
+
+            if (!room.currentVideo) return;
+
+            if (room.hostId.toString() !== userId ) {
+                  socket.send(JSON.stringify({
+                        type: "error",
+                        message: "You cannot chnage the video"
+                  }));
+                  return;
+            }
+
+            room.currentVideo.videoId = videoId;
             await room.save()
 
             await this.SyncState(socket);
