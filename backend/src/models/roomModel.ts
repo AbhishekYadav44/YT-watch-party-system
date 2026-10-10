@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { string } from "zod";
 
 const roomSchema = new mongoose.Schema(
     {
@@ -35,9 +36,20 @@ const roomSchema = new mongoose.Schema(
             },
         ],
 
-        currentVideoId: {
-            type: String,
-            default: "",
+        currentVideo: {
+            videoId: {
+                type: String,
+                default: ""
+            },
+            videoState: {
+                type: String,
+                enum: ["playing", "paused"],
+                default: "paused"
+            },
+            currentTime: {
+                type: Number,
+                default: 0
+            }
         },
 
         videosQueue: [

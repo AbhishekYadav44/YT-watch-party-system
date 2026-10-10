@@ -13,6 +13,8 @@ export class Room {
                   await this.joinRoom(socket, roomId, userId);
             } else if (message.type === 'left-room') {
                   this.disconnectUser(socket, userId);
+            } else if (message.type === 'sync-state') {
+                  this.SyncState(socket);
             }
       }
 
@@ -93,6 +95,25 @@ export class Room {
                   this.rooms.delete(roomId);
             }
 
+      }
+
+      private async SyncState(socket: WebSocket) {
+            const roomId = this.socketsroom.get(socket);
+
+            if (!roomId) return;
+
+            const room = await roomModel.findOne({ roomId });
+
+            if (!room) return;
+
+            const currentVideo = room.currentVideo;
+
+            socket.send(JSON.stringify({
+                  type: "sync_state",
+                  videoId: currentVideo.videoId,
+                  currentTime: currentVideo.currentTime,
+                  videoState: currentVideo.videoState
+            }));
       }
 
 }
