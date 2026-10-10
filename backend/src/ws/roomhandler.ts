@@ -1,9 +1,10 @@
-import type { string } from "zod";
+
 import roomModel from "../models/roomModel.js";
 import WebSocket from "ws";
 export class Room {
 
       private rooms = new Map<string, Set<WebSocket>>();
+      private socketsroom = new Map<WebSocket, string>();
 
       public async handleEvent(socket: WebSocket, message: any, userId: string) {
             console.log("Event:", message.type, "User:", userId);
@@ -11,7 +12,7 @@ export class Room {
                   let roomId = message.roomId;
                   await this.joinRoom(socket, roomId, userId);
             } else if (message.type === 'left-room') {
-                  this.disconnectUser(socket);
+                  this.disconnectUser(socket, userId);
             }
       }
 
@@ -44,6 +45,20 @@ export class Room {
             }
 
             roomSockets.add(socket);
+            this.socketsroom.set(socket, roomId)
+
+            for (let client of roomSockets) {
+                  if (client === socket) {
+                        continue;
+                  } else {
+                        client.send(JSON.stringify({
+                              type: "user-joined",
+                              message: "new uer joined",
+                              userId
+                        }))
+                  }
+
+            }
 
             socket.send(JSON.stringify({
                   type: "join-room",
@@ -51,15 +66,31 @@ export class Room {
             }))
       }
 
-      public disconnectUser(socket: WebSocket) {
+      public disconnectUser(socket: WebSocket, userId: string) {
+            let roomId = this.socketsroom.get(socket);
+            if (!roomId) return;
+            let roomSockets = this.rooms.get(roomId)
+            if (!roomSockets) {
+                  return;
+            }
 
-            for (let [roomId, roomSockets] of this.rooms) {
-                  if (roomSockets.has(socket)) {
-                        roomSockets.delete(socket)
-                  }
-                  if (roomSockets.size === 0) {
-                        this.rooms.delete(roomId);
-                  }
+            for (const client of roomSockets) {
+                  if (client === socket) continue;
+
+                  client.send(JSON.stringify({
+                        type: "user-left",
+                        message: "one user left the room!",
+                        userId
+                  }))
+
+            }
+
+            this.socketsroom.delete(socket);
+
+            roomSockets.delete(socket);
+
+            if (roomSockets.size === 0) {
+                  this.rooms.delete(roomId);
             }
 
       }

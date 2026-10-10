@@ -12,9 +12,11 @@ export async function initws(server: http.Server) {
         console.log("WebSocket client connected!");
         let authenticatedUserId: string | null = null;
 
-        socket.on('message', async(data) => {
+        let message: any;
+
+        socket.on('message', async (data) => {
             try {
-                const message = JSON.parse(data.toString());
+                message = JSON.parse(data.toString());
 
                 try {
                     if (!authenticatedUserId) {
@@ -44,7 +46,7 @@ export async function initws(server: http.Server) {
                 console.log("Message received:", message);
 
 
-               await room.handleEvent(socket , message, authenticatedUserId)
+                await room.handleEvent(socket, message, authenticatedUserId)
 
             } catch (e) {
                 socket.close(1008, "something went wrong!");
@@ -52,7 +54,8 @@ export async function initws(server: http.Server) {
         })
 
         socket.on("close", () => {
-            room.disconnectUser(socket)
+            console.log('u left the room')
+
         })
 
     })
