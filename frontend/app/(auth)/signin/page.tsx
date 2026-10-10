@@ -9,36 +9,29 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 
 export default function SignupPage() {
-    const nameRef = useRef<HTMLInputElement>(null);
     const emailRef = useRef<HTMLInputElement>(null);
     const passwordRef = useRef<HTMLInputElement>(null);
     const [loading, setLoading] = useState(false)
     const router = useRouter()
     const backend_url = process.env.NEXT_PUBLIC_BACKEND_URL;
     console.log("Backend URL:", backend_url);
-
-    const handleRegister = async () => {
+    const handlelogin = async () => {
         try {
-            const username = nameRef.current?.value;
             const email = emailRef.current?.value;
             const password = passwordRef.current?.value;
 
-            if (!username || !email || !password) return
+            if ( !email || !password) return
             setLoading(true)
 
-            const res = await axios.post(`${backend_url}/user/signup`, {
-                username,
+            const res = await axios.post(`${backend_url}/user/signin`, {
                 email,
                 password,
             });
-
-            console.log(res);
-
-            console.log("Success:", res.data);
-            router.push("/signin");
+            const token = res.data.token;
+             localStorage.setItem("token", token)
+            router.push("/");
         } catch (err: any) {
             console.error("Error:", err.response?.data?.message || err.message);
-
         } finally {
             setLoading(false)
         }
@@ -53,7 +46,6 @@ export default function SignupPage() {
                     className="h-full w-full object-cover opacity-60"
                 />
             </div>
-
             <div className="absolute inset-0 bg-black/20" />
             <div className="relative z-10 w-full max-w-md rounded-4xl p-8 shadow-2xl backdrop-blur-xl">
                 <Link
@@ -77,18 +69,6 @@ export default function SignupPage() {
                     </p>
                 </div>
                 <div className="flex gap-2 flex-col">
-
-                    <div className="flex items-center gap-3 rounded-lg border border-white/20 bg-black/40 px-3 focus-within:border-red-600">
-                        <UserRound size={18} className="shrink-0 text-gray-400" />
-
-                        <input
-                            id="name"
-                            type="text"
-                            placeholder="Enter username"
-                            ref={nameRef}
-                            className="w-full bg-transparent py-3 text-sm outline-none placeholder:text-gray-400"
-                        />
-                    </div>
 
                     <div className="flex items-center gap-3 rounded-lg border border-white/20 bg-black/40 px-3 focus-within:border-red-600">
                         <Mail size={18} className="shrink-0 text-gray-400" />
@@ -115,23 +95,23 @@ export default function SignupPage() {
                         </div>
                     </div>
                     <button
-                        onClick={handleRegister}
+                        onClick={handlelogin}
                         type="submit"
                         disabled={loading}
                         className="w-full rounded-lg bg-red-600 py-3 font-semibold transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        {loading ? "Please wait..." : "Create Account"}
+                        {loading ? "Please wait..." : "SignIn"}
                     </button>
 
                 </div>
 
                 <p className="mt-6 text-center text-sm text-gray-300">
-                    Already have an account?{" "}
+                    Don't have an account?{" "}
                     <Link
-                        href="/login"
+                        href="/signup"
                         className="font-semibold text-red-500 hover:text-red-400"
                     >
-                        Login
+                        signup
                     </Link>
                 </p>
                 <p className="mt-5 text-center text-sm text-gray-300">
