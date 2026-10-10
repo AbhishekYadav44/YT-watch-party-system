@@ -14,7 +14,13 @@ export class Room {
             } else if (message.type === 'left-room') {
                   this.disconnectUser(socket, userId);
             } else if (message.type === 'sync-state') {
-                  this.SyncState(socket);
+                  await this.SyncState(socket);
+            } else if (message.type === 'play') {
+                  await this.playVideo(socket, userId);
+            } else if (message.type === 'pause') {
+                  await this.pauseVideo(socket, userId);
+            } else if (message.type === 'seek') {
+                  await this.seekVideo(socket, userId ,message.currentTime);
             }
       }
 
@@ -106,14 +112,104 @@ export class Room {
 
             if (!room) return;
 
-            const currentVideo = room.currentVideo;
+            const currentVideo = room.currentVideo!;
+            let roomScokets = this.rooms.get(roomId);
 
-            socket.send(JSON.stringify({
-                  type: "sync_state",
-                  videoId: currentVideo.videoId,
-                  currentTime: currentVideo.currentTime,
-                  videoState: currentVideo.videoState
-            }));
+            for (const client of roomScokets!) {
+                  client.send(JSON.stringify({
+                        type: "sync-state",
+                        videoId: currentVideo.videoId,
+                        currentTime: currentVideo.currentTime,
+                        videoState: currentVideo.videoState
+                  }));
+            }
+
+
+      }
+
+      private async playVideo(socket: WebSocket, userId: string) {
+
+
+            let roomId = this.socketsroom.get(socket);
+            if (!roomId) return;
+
+            let room = await roomModel.findOne({ roomId });
+            if (!room) return
+
+            if (!room.currentVideo) return;
+
+            const participant = room.participants.find(
+                  p => p.user.toString() === userId
+            );
+
+            if (room.hostId.toString() !== userId && participant?.role !== "moderator") {
+                  socket.send(JSON.stringify({
+                        type: "error",
+                        message: "You cannot play the video"
+                  }));
+                  return;
+            }
+
+            room.currentVideo.videoState = "playing";
+            await room.save()
+
+            await this.SyncState(socket);
+      }
+      private async pauseVideo(socket: WebSocket, userId: string) {
+
+
+            let roomId = this.socketsroom.get(socket);
+            if (!roomId) return;
+
+            let room = await roomModel.findOne({ roomId });
+            if (!room) return
+
+            if (!room.currentVideo) return;
+
+            const participant = room.participants.find(
+                  p => p.user.toString() === userId
+            );
+
+            if (room.hostId.toString() !== userId && participant?.role !== "moderator") {
+                  socket.send(JSON.stringify({
+                        type: "error",
+                        message: "You cannot play the video"
+                  }));
+                  return;
+            }
+
+            room.currentVideo.videoState = "paused";
+            await room.save()
+
+            await this.SyncState(socket);
+      }
+      private async seekVideo(socket: WebSocket, userId: string, currentTime : number) {
+
+
+            let roomId = this.socketsroom.get(socket);
+            if (!roomId) return;
+
+            let room = await roomModel.findOne({ roomId });
+            if (!room) return
+
+            if (!room.currentVideo) return;
+
+            const participant = room.participants.find(
+                  p => p.user.toString() === userId
+            );
+
+            if (room.hostId.toString() !== userId && participant?.role !== "moderator") {
+                  socket.send(JSON.stringify({
+                        type: "error",
+                        message: "You cannot play the video"
+                  }));
+                  return;
+            }
+
+            room.currentVideo.currentTime = currentTime;
+            await room.save()
+
+            await this.SyncState(socket);
       }
 
 }
