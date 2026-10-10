@@ -12,11 +12,9 @@ export async function initws(server: http.Server) {
         console.log("WebSocket client connected!");
         let authenticatedUserId: string | null = null;
 
-        let message: any;
-
         socket.on('message', async (data) => {
             try {
-                message = JSON.parse(data.toString());
+                const message = JSON.parse(data.toString());
 
                 try {
                     if (!authenticatedUserId) {
@@ -27,12 +25,13 @@ export async function initws(server: http.Server) {
                             return;
                         }
                         authenticatedUserId = verifyToken(message.token);
+                        console.log("done"),
+                            socket.send(JSON.stringify({
 
-                        socket.send(JSON.stringify({
-                            type: "authenticate",
-                            message: "authentication succesful",
-                            userId: authenticatedUserId
-                        }))
+                                type: "authenticate",
+                                message: "authentication succesful",
+                                userId: authenticatedUserId
+                            }))
                         return;
                     }
                 } catch (e) {
@@ -55,7 +54,6 @@ export async function initws(server: http.Server) {
 
         socket.on("close", () => {
             console.log('u left the room')
-
         })
 
     })

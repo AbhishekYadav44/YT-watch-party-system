@@ -23,7 +23,7 @@ export class Room {
             } else if (message.type === 'left-room') {
                   this.disconnectUser(socket, userId);
             } else if (message.type === 'sync-state') {
-                  await this.SyncState(socket);
+                   this.SyncState(socket);
             } else if (message.type === 'play') {
                   await this.playVideo(socket, userId);
             } else if (message.type === 'pause') {
