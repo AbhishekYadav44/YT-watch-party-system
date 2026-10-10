@@ -20,9 +20,11 @@ export class Room {
             } else if (message.type === 'pause') {
                   await this.pauseVideo(socket, userId);
             } else if (message.type === 'seek') {
-                  await this.seekVideo(socket, userId ,message.currentTime);
-            }else if (message.type === 'change-video') {
-                  await this.changeVideo(socket, userId ,message.videoId);
+                  await this.seekVideo(socket, userId, message.currentTime);
+            } else if (message.type === 'change-video') {
+                  await this.changeVideo(socket, userId, message.videoId);
+            } else if (message.type === 'assign-role') {
+                  await this.assinRole(socket, userId, message.targetUserId , message.role);
             }
       }
 
@@ -185,7 +187,7 @@ export class Room {
 
             await this.SyncState(socket);
       }
-      private async seekVideo(socket: WebSocket, userId: string, currentTime : number) {
+      private async seekVideo(socket: WebSocket, userId: string, currentTime: number) {
 
 
             let roomId = this.socketsroom.get(socket);
@@ -213,7 +215,7 @@ export class Room {
 
             await this.SyncState(socket);
       }
-      private async changeVideo(socket: WebSocket, userId: string, videoId : string) {
+      private async changeVideo(socket: WebSocket, userId: string, videoId: string) {
 
             let roomId = this.socketsroom.get(socket);
             if (!roomId) return;
@@ -223,7 +225,7 @@ export class Room {
 
             if (!room.currentVideo) return;
 
-            if (room.hostId.toString() !== userId ) {
+            if (room.hostId.toString() !== userId) {
                   socket.send(JSON.stringify({
                         type: "error",
                         message: "You cannot chnage the video"
@@ -235,6 +237,40 @@ export class Room {
             await room.save()
 
             await this.SyncState(socket);
+      }
+      private async assinRole(socket: WebSocket, userId: string, targetedUserId : string,  role: string) {
+
+            let roomId = this.socketsroom.get(socket);
+            if (!roomId) return;
+
+            let room = await roomModel.findOne({ roomId });
+            if (!room) return
+
+
+            if (room.hostId.toString() !== userId) {
+                  socket.send(JSON.stringify({
+                        type: "error",
+                        message: "You cannot chnage the role"
+                  }));
+                  return;
+            }
+
+            let user = room.participants.find((p) => {
+                  return p.user.toString() === targetedUserId;
+            })
+            if(!user)return;
+            user.role = role as 'host' | 'moderator';
+            await room.save();
+
+            let roomSockets = this.rooms.get(roomId);
+
+            for(const client of roomSockets!){
+                  client.send(JSON.stringify({
+                        type : 'role-assigned',
+                        targetedUserId : targetedUserId,
+                        role : role
+                  }))
+            }
       }
 
 }
