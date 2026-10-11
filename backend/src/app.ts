@@ -8,7 +8,14 @@ dotenv.config()
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin: [
+        "http://localhost:3000",
+        process.env.FRONTEND_URL!,
+    ],
+    credentials: true,
+})
+);
 
 app.get("/", (req, res) => {
     res.json({
@@ -28,6 +35,6 @@ main().then(() => {
 })
 
 app.use('/user', userRoutes);
-app.use("/room" , roomRoutes)
+app.use("/room", roomRoutes)
 
 export default app;
