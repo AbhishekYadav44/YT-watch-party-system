@@ -12,7 +12,7 @@ const roomSchema = new mongoose.Schema(
 
         hostId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
+            ref: "userModel",
             required: true,
         },
 
@@ -20,7 +20,7 @@ const roomSchema = new mongoose.Schema(
             {
                 user: {
                     type: mongoose.Schema.Types.ObjectId,
-                    ref: "User",
+                    ref: "userModel",
                     required: true,
                 },
 

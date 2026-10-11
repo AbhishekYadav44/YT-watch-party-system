@@ -53,8 +53,10 @@ export async function initws(server: http.Server) {
         })
 
         socket.on("close", () => {
-            console.log('u left the room')
-        })
+            if (authenticatedUserId) {
+                room.disconnectUser(socket, authenticatedUserId);
+            }
+        });
 
     })
 

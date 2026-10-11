@@ -23,19 +23,17 @@ export class Room {
             } else if (message.type === 'left-room') {
                   this.disconnectUser(socket, userId);
             } else if (message.type === 'sync-state') {
-                   this.SyncState(socket);
+                  this.SyncState(socket);
             } else if (message.type === 'play') {
-                  await this.playVideo(socket, userId);
+                  await this.playVideo(socket, userId, message.currentTime);
             } else if (message.type === 'pause') {
-                  await this.pauseVideo(socket, userId);
+                  await this.pauseVideo(socket, userId, message.currentTime);
             } else if (message.type === 'seek') {
                   await this.seekVideo(socket, userId, message.currentTime);
             } else if (message.type === 'change-video') {
                   await this.changeVideo(socket, userId, message.videoId);
             } else if (message.type === 'assign-role') {
                   await this.assinRole(socket, userId, message.targetUserId, message.role);
-            } else if (message.type === 'remove-participant') {
-                  await this.removeParticipant(socket, userId, message.targetUserId);
             }
       }
 
@@ -49,9 +47,13 @@ export class Room {
                   return;
             }
 
+
             let participant = room?.participants.find((p) => {
                   return p.user.toString() === userId
             })
+            console.log("Joining userId:", userId);
+            console.log("Room participants:", room.participants);
+            console.log(participant)
             if (!participant) {
                   socket.send(JSON.stringify({
                         type: "error",
@@ -99,14 +101,19 @@ export class Room {
                   }
 
             }
+            console.log("Joining userId:", userId);
+            console.log("Room participants:", room.participants);
 
             socket.send(JSON.stringify({
                   type: "join-room",
-                  message: "user joined!"
+                  message: "user joined!",
+                  role: participant.role
             }))
+
+            await this.broadcastParticipants(roomId);
       }
 
-      public disconnectUser(socket: WebSocket, userId: string) {
+      public async disconnectUser(socket: WebSocket, userId: string) {
             let roomId = this.socketsroom.get(socket);
             if (!roomId) return;
             let roomSockets = this.rooms.get(roomId)
@@ -129,33 +136,38 @@ export class Room {
 
             if (roomSockets.size === 0) {
                   this.rooms.delete(roomId);
+            } else {
+                  await this.broadcastParticipants(roomId);
             }
 
       }
 
-      private SyncState(socket: WebSocket) {
+      private SyncState(socket: WebSocket, broadcast = false) {
             const roomId = this.socketsroom.get(socket);
             if (!roomId) return;
-
             const video = this.currentVideo.get(roomId);
             if (!video) return;
 
+            const payload = JSON.stringify({
+                  type: "sync-state",
+                  videoId: video.videoId,
+                  currentTime: video.currentTime,
+                  videoState: video.videoState
+            });
+
+            if (!broadcast) {
+                  socket.send(payload);
+                  return;
+            }
+
             const roomSockets = this.rooms.get(roomId);
             if (!roomSockets) return;
-
-            for (const [client, clientId] of roomSockets) {
-                  if (client.readyState !== WebSocket.OPEN) continue;
-
-                  client.send(JSON.stringify({
-                        type: "sync-state",
-                        videoId: video.videoId,
-                        currentTime: video.currentTime,
-                        videoState: video.videoState
-                  }));
+            for (const [client] of roomSockets) {
+                  if (client.readyState === WebSocket.OPEN) client.send(payload);
             }
       }
 
-      private async playVideo(socket: WebSocket, userId: string) {
+      private async playVideo(socket: WebSocket, userId: string, currentTime?: number) {
 
 
             let roomId = this.socketsroom.get(socket);
@@ -182,12 +194,14 @@ export class Room {
             const video = this.currentVideo.get(roomId);
             if (!video) return;
 
+            if (typeof currentTime === "number" && currentTime >= 0) {
+                  video.currentTime = currentTime;
+            }
             video.videoState = "playing";
-
-            this.SyncState(socket);
+            this.SyncState(socket, true);
 
       }
-      private async pauseVideo(socket: WebSocket, userId: string) {
+      private async pauseVideo(socket: WebSocket, userId: string, currentTime?: number) {
 
 
             let roomId = this.socketsroom.get(socket);
@@ -214,8 +228,11 @@ export class Room {
 
             let video = this.currentVideo.get(roomId);
             if (!video) return;
+            if (typeof currentTime === "number" && currentTime >= 0) {
+                  video.currentTime = currentTime;
+            }
             video.videoState = 'paused';
-            this.SyncState(socket);
+            this.SyncState(socket, true);
       }
       private async seekVideo(socket: WebSocket, userId: string, currentTime: number) {
 
@@ -245,7 +262,7 @@ export class Room {
             let video = this.currentVideo.get(roomId);
             if (!video) return;
             video.currentTime = currentTime
-            this.SyncState(socket);
+            this.SyncState(socket, true);
       }
       private async changeVideo(socket: WebSocket, userId: string, videoId: string) {
 
@@ -281,7 +298,7 @@ export class Room {
             video.videoId = videoId
             video.currentTime = 0;
             video.videoState = 'paused'
-            this.SyncState(socket);
+            this.SyncState(socket, true);
       }
       private async assinRole(socket: WebSocket, userId: string, targetedUserId: string, role: string) {
 
@@ -304,7 +321,23 @@ export class Room {
                   return p.user.toString() === targetedUserId;
             })
             if (!user) return;
-            user.role = role as 'host' | 'moderator';
+            if (role !== "moderator" && role !== "participant") {
+                  socket.send(JSON.stringify({
+                        type: "error",
+                        message: "Invalid role",
+                  }));
+                  return;
+            }
+
+            if (targetedUserId === room.hostId.toString()) {
+                  socket.send(JSON.stringify({
+                        type: "error",
+                        message: "Host role cannot be changed",
+                  }));
+                  return;
+            }
+
+            user.role = role;
             await room.save();
             const permissions = this.roomPermissions.get(roomId);
 
@@ -325,7 +358,9 @@ export class Room {
                         role: role
                   }))
             }
+            await this.broadcastParticipants(roomId);
       }
+
       private async removeParticipant(socket: WebSocket, userId: string, targetedUserId: string) {
 
             let roomId = this.socketsroom.get(socket);
@@ -401,7 +436,67 @@ export class Room {
                         this.rooms.delete(roomId);
                   }
             }
+            await this.broadcastParticipants(roomId);
 
+      }
+
+      private async getParticipants(roomId: string) {
+            const roomSockets = this.rooms.get(roomId);
+            if (!roomSockets) return [];
+
+
+            const onlineIds = new Set<string>();
+            for (const [socket, userId] of roomSockets) {
+                  if (socket.readyState === WebSocket.OPEN) onlineIds.add(userId);
+            }
+
+            const room = await roomModel
+                  .findOne({ roomId })
+                  .populate<{
+                        participants: Array<{
+                              user: {
+                                    _id: import("mongoose").Types.ObjectId;
+                                    username: string;
+                              };
+                              role: string;
+                        }>
+                  }>("participants.user", "username");
+
+            if (!room) return [];
+
+            const participants = [];
+
+            for (const p of room.participants) {
+                  const user = p.user;
+
+                  const id = user._id.toString();
+
+                  if (!onlineIds.has(id)) continue;
+
+                  participants.push({
+                        userId: id,
+                        name: user.username || "Unknown User",
+                        role: p.role,
+                        isOnline: true
+                  });
+            }
+
+            return participants;
+      }
+      private async broadcastParticipants(roomId: string) {
+            try {
+                  const roomSockets = this.rooms.get(roomId);
+                  if (!roomSockets) return;
+
+                  const participants = await this.getParticipants(roomId);
+                  const payload = JSON.stringify({ type: "participants", participants });
+
+                  for (const [client] of roomSockets) {
+                        if (client.readyState === WebSocket.OPEN) client.send(payload);
+                  }
+            } catch (e) {
+                  console.log("broadcastParticipants error:", e);
+            }
       }
 
 }
