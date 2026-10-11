@@ -16,7 +16,7 @@ export default function SignupPage() {
     const [error, setError] = useState("");
     const backend_url = process.env.NEXT_PUBLIC_BACKEND_URL;
     console.log("Backend URL:", backend_url);
-    const handlelogin = async () => {
+    
         const handlelogin = async () => {
             try {
                 const email = emailRef.current?.value;
@@ -130,4 +130,3 @@ export default function SignupPage() {
             </main >
         );
     }
-}
