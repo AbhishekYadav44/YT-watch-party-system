@@ -1,42 +1,26 @@
-
 export type YTPlayer = {
+    destroy: () => void;
     playVideo: () => void;
     pauseVideo: () => void;
-
-    loadVideoById: (
-        videoId: string,
-        startSeconds?: number
-    ) => void;
-
-    cueVideoById: (
-        videoId: string,
-        startSeconds?: number
-    ) => void;
-
-    seekTo: (
-        seconds: number,
-        allowSeekAhead: boolean
-    ) => void;
-
+    seekTo: (seconds: number, allowSeekAhead: boolean) => void;
     getCurrentTime: () => number;
-    destroy: () => void;
+    loadVideoById: (videoId: string, startSeconds?: number) => void;
+    cueVideoById: (videoId: string, startSeconds?: number) => void;
 };
 
 export type YouTubeAPI = {
     Player: new (
         element: HTMLElement,
         options: {
-            videoId: string;
+            videoId?: string;
             playerVars?: Record<string, number>;
             events?: {
-                onReady?: (event: {
-                    target: YTPlayer;
-                }) => void;
-
+                onReady?: (event: { target: YTPlayer }) => void;
                 onStateChange?: (event: {
                     data: number;
                     target: YTPlayer;
                 }) => void;
+                onError?: (event: { data: number }) => void;
             };
         }
     ) => YTPlayer;
@@ -45,7 +29,6 @@ export type YouTubeAPI = {
         PLAYING: number;
         PAUSED: number;
         ENDED: number;
-        CUED: number;
     };
 };
 

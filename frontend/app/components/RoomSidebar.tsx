@@ -17,6 +17,7 @@ type RoomSidebarProps = {
         targetUserId: string,
         role: "moderator" | "participant"
     ) => void;
+    onRemoveParticipant: (targetUserId: string) => void
 };
 
 export default function RoomSidebar({
@@ -24,6 +25,7 @@ export default function RoomSidebar({
     isHost,
     currentUserId,
     onRoleChange,
+    onRemoveParticipant,
 }: RoomSidebarProps) {
     const onlineCount = participants.filter(
         (participant) => participant.isOnline
@@ -144,6 +146,17 @@ export default function RoomSidebar({
                                             <option value="participant">Participant</option>
                                             <option value="moderator">Moderator</option>
                                         </select>
+                                    )}
+                                {isHost &&
+                                    participant.userId !== currentUserId &&
+                                    participant.role !== "host" && (
+                                        <button
+                                            type="button"
+                                            onClick={() => onRemoveParticipant(participant.userId)}
+                                            className="mt-2 rounded-md bg-red-600 px-3 py-1 text-xs text-white hover:bg-red-500"
+                                        >
+                                            Remove
+                                        </button>
                                     )}
                             </div>
                         </div>

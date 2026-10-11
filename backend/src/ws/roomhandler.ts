@@ -34,6 +34,8 @@ export class Room {
                   await this.changeVideo(socket, userId, message.videoId);
             } else if (message.type === 'assign-role') {
                   await this.assinRole(socket, userId, message.targetUserId, message.role);
+            } else if (message.type === "remove-participant") {
+                  await this.removeParticipant(socket,userId,message.targetedUserId);
             }
       }
 

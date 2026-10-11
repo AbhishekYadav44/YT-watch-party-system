@@ -28,6 +28,7 @@ export default function SignupPage() {
                 password,
             });
             const token = res.data.token;
+            console.log(token)
              localStorage.setItem("token", token)
             router.push("/");
         } catch (err: any) {

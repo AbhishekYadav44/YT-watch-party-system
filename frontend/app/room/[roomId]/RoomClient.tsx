@@ -124,9 +124,39 @@ export default function RoomClient({ roomId }: { roomId: string }) {
             videoState: data.videoState,
         });
     };
+
+    const handleRoleChange = (
+        targetUserId: string,
+        role: "moderator" | "participant"
+    ) => {
+        sendMessage({
+            type: "assign-role",
+            targetUserId,
+            role,
+        });
+    };
+    const handleRemoveParticipant = (targetedUserId: string) => {
+        const confirmed = window.confirm(
+            "Are you sure you want to remove this participant?"
+        );
+
+        if (!confirmed) return;
+
+        sendMessage({
+            type: "remove-participant",
+            targetedUserId,
+        });
+    };
     const handleParticipants = (data: ServerMessage) => {
-        if (!data.participants) return;
+        console.log("Participants message received:", data);
+
+        if (!Array.isArray(data.participants)) {
+            console.warn("Participants data missing or invalid:", data);
+            return;
+        }
+
         setParticipants(data.participants);
+
     };
 
 
@@ -221,11 +251,18 @@ export default function RoomClient({ roomId }: { roomId: string }) {
         };
 
         ws.onerror = (event) => {
-            console.error("WebSocket error:", event);
-            setErrorMessage("A WebSocket connection error occurred.");
+            console.error("WebSocket error event:", event);
+            console.error("WebSocket URL:", WS_URL);
+            console.error("WebSocket readyState:", ws.readyState);
         };
 
-        ws.onclose = () => {
+        ws.onclose = (event) => {
+            console.log("WebSocket closed:", {
+                code: event.code,
+                reason: event.reason,
+                wasClean: event.wasClean,
+            });
+
             setIsConnected(false);
             setIsAuthenticated(false);
             setIsJoined(false);
@@ -256,7 +293,7 @@ export default function RoomClient({ roomId }: { roomId: string }) {
         <main className="min-h-screen bg-black text-white">
             <RoomHeader
                 roomId={roomId}
-                // onLeave={handleLeaveRoom}
+            // onLeave={handleLeaveRoom}
             />
 
             {errorMessage && (
@@ -283,7 +320,12 @@ export default function RoomClient({ roomId }: { roomId: string }) {
                 />
 
                 <div className="min-w-0">
-                    <RoomSidebar participants={participants} />
+                    <RoomSidebar participants={participants}
+                        isHost={isHost}
+                        currentUserId={userIdRef.current}
+                        onRoleChange={handleRoleChange}
+                        onRemoveParticipant={handleRemoveParticipant}
+                    />
                 </div>
             </div>
         </main>

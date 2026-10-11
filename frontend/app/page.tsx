@@ -45,7 +45,7 @@ export default function Home() {
       const token = localStorage.getItem("token");
 
       if (!token) {
-        router.push("/auth/signin");
+        router.push("/signin");
         return;
       }
 
