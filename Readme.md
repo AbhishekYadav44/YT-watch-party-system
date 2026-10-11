@@ -13,10 +13,12 @@ Watch-Party is a real-time YouTube watch party application that allows users to 
 
 ## 🛠️ Tech Stack
 
-* **Frontend:** Next.js, React, TypeScript, Tailwind CSS
+* **Frontend:** Next.js,  TypeScript, Tailwind CSS
 * **Backend:** Node.js, Express.js, TypeScript
 * **Real-Time Communication:** WebSocket (`ws`)
 * **Database:** MongoDB, Mongoose
+
+* Video Player & Playback Control: YouTube IFrame Player API
 * **Authentication:** JWT
 * **HTTP Client:** Axios
 
@@ -34,7 +36,7 @@ The application uses REST APIs for authentication and room management, while Web
 
 1. Users sign in and receive an authentication token.
 2. The frontend establishes a WebSocket connection and authenticates with the server.
-3. Users join a room through the REST API and WebSocket connection.
+3. Users can create or join a room through the REST API and WebSocket connection.
 4. The backend manages room membership, participant roles, and video state.
 5. Authorized playback actions are broadcast to connected participants.
 6. Clients update their video players using the synchronized state.
@@ -43,11 +45,6 @@ The backend uses a `Room` class to encapsulate room membership, video synchroniz
 
 ## ⚙️ Getting Started
 
-### Prerequisites
-
-* Node.js
-* npm
-* MongoDB or MongoDB Atlas
 
 ### 1. Clone the Repository
 
