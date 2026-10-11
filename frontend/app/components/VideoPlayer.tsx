@@ -259,7 +259,7 @@ export default function VideoPlayer({
             if (applyTimerRef.current) clearTimeout(applyTimerRef.current);
             applyTimerRef.current = setTimeout(() => {
                 applyingRef.current = false;
-            }, 800);
+            }, 500);
         }
     }, [videoState, playerReady]);
 
